@@ -34,7 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import coil3.compose.rememberAsyncImagePainter
 import androidx.compose.ui.unit.dp
-
+import com.example.rickymortychallenge.api.db.AppDatabase
 
 
 class MainActivity : ComponentActivity() {
@@ -44,7 +44,10 @@ class MainActivity : ComponentActivity() {
         setContent {
             RickyMortyChallengeTheme {
                 Scaffold( modifier = Modifier.fillMaxSize() ) { innerPadding ->
-                    val rickyManager = RickyManager()
+
+                    // get db instance
+                    val db = AppDatabase.getInstance(applicationContext)
+                    val rickyManager = RickyManager(db)
                     App( modifier = Modifier.padding(innerPadding), rickyManager)
 
                 }
@@ -117,10 +120,7 @@ fun CharacterItem(character: Character) {
                     text = "Gender: ${character.gender}",
                     style = MaterialTheme.typography.bodyMedium
                 )
-                Text(
-                    text = "Origin: ${character.origin?.name}",
-                    style = MaterialTheme.typography.bodyMedium
-                )
+
             }
         }
     }

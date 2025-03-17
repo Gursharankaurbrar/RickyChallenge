@@ -5,13 +5,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import com.example.rickymortychallenge.api.db.AppDatabase
 
 import com.example.rickymortychallenge.api.model.Character
 import com.example.rickymortychallenge.api.model.RickyData
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import retrofit2.Call
 import retrofit2.Response
 
-class RickyManager {
+class RickyManager(database: AppDatabase) {
     private var _rickiesResponse = mutableStateOf<List<Character>>(emptyList())
 
 
@@ -22,10 +26,11 @@ class RickyManager {
         }
 
     init{
-        getRicky()
+        getRicky(database)
     }
 
-    private fun getRicky() {
+    @OptIn(DelicateCoroutinesApi::class)
+    private fun getRicky(database: AppDatabase) {
         val service = Api.retrofitService.getCharacters() // Correct API call
 
         service.enqueue(object : retrofit2.Callback<RickyData> {
@@ -37,6 +42,12 @@ class RickyManager {
                     _rickiesResponse.value = (response.body()?.results ?: emptyList()) as List<Character>
 
                     Log.i("Data Stream", _rickiesResponse.value.toString())
+
+                    // save data to the database
+                    GlobalScope.launch {
+                        saveDataToDatabase(database = database, characters = _rickiesResponse.value)
+
+                    }
                 }
             }
 
@@ -46,4 +57,7 @@ class RickyManager {
         })
     }
 
+    private suspend fun saveDataToDatabase(database: AppDatabase, characters: List<Character>){
+        database.rickyDao().insertAll(characters)
+    }
 }

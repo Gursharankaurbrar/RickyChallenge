@@ -44,7 +44,9 @@ dependencies {
     // room
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
-    annotationProcessor(libs.androidx.room.compiler)
+    implementation(libs.androidx.room.common)
+    annotationProcessor(libs.androidx.room.room.compiler)
+    ksp("androidx.room:room-compiler:2.6.1")
 
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)

@@ -31,19 +31,17 @@ class RickyManager(database: AppDatabase) {
 
     @OptIn(DelicateCoroutinesApi::class)
     private fun getRicky(database: AppDatabase) {
-        val service = Api.retrofitService.getCharacters() // Correct API call
+        val service = Api.retrofitService.getCharacters()
 
         service.enqueue(object : retrofit2.Callback<RickyData> {
             override fun onResponse(call: Call<RickyData>, response: Response<RickyData>) {
                 if (response.isSuccessful) {
                     Log.i("Data", "Data is loaded successfully")
 
-                    // Update state properly
                     _rickiesResponse.value = (response.body()?.results ?: emptyList()) as List<Character>
 
                     Log.i("Data Stream", _rickiesResponse.value.toString())
 
-                    // save data to the database
                     GlobalScope.launch {
                         saveDataToDatabase(database = database, characters = _rickiesResponse.value)
 

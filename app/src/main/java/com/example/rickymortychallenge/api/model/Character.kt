@@ -1,9 +1,11 @@
 package com.example.rickymortychallenge.api.model
 
 
+import androidx.room.Entity
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
+@Entity(tableName = "characters")
 @JsonClass(generateAdapter = true)
 data class Character(
     @Json(name = "created")

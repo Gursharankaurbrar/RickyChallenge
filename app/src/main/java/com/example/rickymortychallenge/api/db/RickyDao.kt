@@ -1,6 +1,7 @@
 package com.example.rickymortychallenge.api.db
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -11,7 +12,16 @@ interface RickyDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertAll( movies: List<Character>)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertCharacter(character: Character)
+
+    @Delete
+    suspend fun deleteCharacter(character: Character)
+
     @Query("SELECT * FROM characters WHERE id = :id")
-    fun getCharacterbyId(id: Int) : Character?
+    suspend fun getCharacterById(id: Int): Character?
+
+    @Query("SELECT * FROM characters")
+    suspend fun getAllCharacters(): List<Character>
 
 }

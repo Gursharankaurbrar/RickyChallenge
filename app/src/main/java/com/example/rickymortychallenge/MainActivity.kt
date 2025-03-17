@@ -1,6 +1,7 @@
 package com.example.rickymortychallenge
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -30,11 +31,18 @@ import com.example.rickymortychallenge.api.model.Character
 import com.example.rickymortychallenge.ui.theme.RickyMortyChallengeTheme
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import coil3.compose.rememberAsyncImagePainter
-import androidx.compose.ui.unit.dp
 import com.example.rickymortychallenge.api.db.AppDatabase
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 
 class MainActivity : ComponentActivity() {
@@ -48,7 +56,7 @@ class MainActivity : ComponentActivity() {
                     // get db instance
                     val db = AppDatabase.getInstance(applicationContext)
                     val rickyManager = RickyManager(db)
-                    App( modifier = Modifier.padding(innerPadding), rickyManager)
+                    App( modifier = Modifier.padding(innerPadding), rickyManager, db)
 
                 }
             }
@@ -58,7 +66,7 @@ class MainActivity : ComponentActivity() {
 
 
 @Composable
-fun App(modifier: Modifier = Modifier, rickyManager: RickyManager) {
+fun App(modifier: Modifier = Modifier, rickyManager: RickyManager, db:AppDatabase) {
     val characters by rickyManager.rickyResponse
 
     Scaffold(
@@ -68,23 +76,45 @@ fun App(modifier: Modifier = Modifier, rickyManager: RickyManager) {
             if (characters.isEmpty()) {
                 CircularProgressIndicator(modifier = Modifier.fillMaxSize())
             } else {
-                CharacterList(characters)
+                CharacterList(
+                    characters,
+                    onAddClick = { character ->
+                        CoroutineScope(Dispatchers.IO).launch {
+                            db.rickyDao().insertCharacter(character)
+                            Log.d("App", "Character added: ${character.name}")
+                        }
+                    },
+                    onDeleteClick = { character ->
+                        CoroutineScope(Dispatchers.IO).launch {
+                            db.rickyDao().deleteCharacter(character)
+                            Log.d("App", "Character deleted: ${character.name}")
+                        }
+                    }
+                )
             }
         }
     }
 }
-
 @Composable
-fun CharacterList(characters: List<com.example.rickymortychallenge.api.model.Character>) {
+fun CharacterList(
+    characters: List<Character>,
+    onAddClick: (Character) -> Unit,
+    onDeleteClick: (Character) -> Unit
+) {
     LazyColumn(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         items(characters) { character ->
-            CharacterItem(character)
+            CharacterItem(character, onAddClick, onDeleteClick)
         }
     }
 }
 
+
 @Composable
-fun CharacterItem(character: Character) {
+fun CharacterItem(
+    character: Character,
+    onAddClick: (Character) -> Unit,
+    onDeleteClick: (Character) -> Unit
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -95,7 +125,6 @@ fun CharacterItem(character: Character) {
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Load character image
             Image(
                 painter = rememberAsyncImagePainter(character.image),
                 contentDescription = "Character Image",
@@ -120,6 +149,22 @@ fun CharacterItem(character: Character) {
                     text = "Gender: ${character.gender}",
                     style = MaterialTheme.typography.bodyMedium
                 )
+
+                Row {
+                    IconButton(onClick = { onAddClick(character) }) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "Add Character"
+                        )
+                    }
+
+                    IconButton(onClick = { onDeleteClick(character) }) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Delete Character"
+                        )
+                    }
+                }
 
             }
         }
